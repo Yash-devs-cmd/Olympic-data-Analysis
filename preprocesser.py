@@ -32,7 +32,7 @@ def preprocess(csv_path):
     
     # drop duplicate values
     duplicate_val_cols = ['Team' , 'Event' , 'Medal' , 'Year' , 'City' ,'Sport' , 'Games'] 
-    df.drop_duplicates(subset=duplicate_val_cols , inplace=True)# drop columns which we have duplicate values and not needed
+    df.drop_duplicates(subset=duplicate_val_cols , inplace=True)
     return df
 
 
