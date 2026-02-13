@@ -12,7 +12,7 @@ def get_country_years(df_copy):
     years = df_copy['Year'].unique().tolist()
     years.sort()
     return years,country
-
+# get medal tally
 def get_medal_tally(df , year , country):
     '''
     there can be 4 cases in case of getting medal tally
@@ -49,4 +49,35 @@ def get_medal_tally(df , year , country):
     medal_tally['Total'] = medal_tally['Gold'] + medal_tally['Silver'] + medal_tally['Bronze']
     # print(medal_tally)
     return medal_tally
-
+# get info over the years . can be nations that participated each year or number of events each year.
+def info_over_years(dataframe , col):
+    # no. of nations participated in olympics each year.
+    info_over_time = dataframe.drop_duplicates(['Year' , col])['Year'].value_counts().reset_index().sort_values(by='count')
+    info_over_time.rename(columns={f'count':col , 'Year':'Edition'},inplace=True)
+    return info_over_time
+# get most successful players by sports.
+def most_successful_by_sport(df ,sport):
+    temp = df[df['Medal'].notna()]
+    if sport!='Overall':
+        temp = df[df['Sport']==sport]
+    
+    top_players = temp['Name'].value_counts().reset_index()
+    top_players.columns = ['Name' , 'Medals']
+    # left join original and top_players data frame on name.
+    x = top_players.merge(df , on='Name' , how='left')[['Name' , 'Sport' , 'Medals' , 'NOC']].drop_duplicates('Name')
+    return x.head(10)
+# get most successful players of a country 
+def most_successful_by_country_code(df ,country_code):
+    temp = df[df['Medal'].notna()]
+    temp = df[df['NOC']==country_code]
+    top_players = temp['Name'].value_counts().reset_index()
+    top_players.columns = ['Name' , 'Medals']
+    # left join original and top_players data frame on name.
+    x = top_players.merge(df , on='Name' , how='left')[['Name' , 'Sport' , 'Medals' , 'NOC']].drop_duplicates('Name')
+    return x.head(10)
+# get events_over_years in a pivot table
+def events_over_years(df , country):
+    df = df.drop_duplicates(['Year' , 'Sport' , 'Event'])
+    x = df[df['NOC']==country]
+    event_over_time = x.pivot_table(index = 'Sport' , values='Event'  , columns='Year', aggfunc='count' , fill_value=0)
+    return event_over_time
