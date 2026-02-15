@@ -52,12 +52,15 @@ def get_medal_tally(df , year , country):
 # get info over the years . can be nations that participated each year or number of events each year.
 def info_over_years(dataframe , col):
     # no. of nations participated in olympics each year.
+    dataframe = dataframe[dataframe['col'].notna()]
     info_over_time = dataframe.drop_duplicates(['Year' , col])['Year'].value_counts().reset_index().sort_values(by='count')
     info_over_time.rename(columns={f'count':col , 'Year':'Edition'},inplace=True)
     return info_over_time
 # get most successful players by sports.
 def most_successful_by_sport(df ,sport):
     temp = df[df['Medal'].notna()]
+    temp = df[(df['Medal']!='No Medal')]
+
     if sport!='Overall':
         temp = df[df['Sport']==sport]
     
@@ -69,7 +72,7 @@ def most_successful_by_sport(df ,sport):
 # get most successful players of a country 
 def most_successful_by_country_code(df ,country_code):
     temp = df[df['Medal'].notna()]
-    temp = df[df['NOC']==country_code]
+    temp = df[(df['Medal']!='No Medal') & (df['NOC']==country_code)]
     top_players = temp['Name'].value_counts().reset_index()
     top_players.columns = ['Name' , 'Medals']
     # left join original and top_players data frame on name.
@@ -77,7 +80,51 @@ def most_successful_by_country_code(df ,country_code):
     return x.head(10)
 # get events_over_years in a pivot table
 def events_over_years(df , country):
-    df = df.drop_duplicates(['Year' , 'Sport' , 'Event'])
-    x = df[df['NOC']==country]
-    event_over_time = x.pivot_table(index = 'Sport' , values='Event'  , columns='Year', aggfunc='count' , fill_value=0)
-    return event_over_time
+        df = df.drop_duplicates(['Year' , 'Sport' , 'Event'])
+        df = df[df['NOC'].notna()]
+        x = df[df['NOC']==country]
+        event_over_time = x.pivot_table(index = 'Sport' , values='Event'  , columns='Year', aggfunc='count' , fill_value=0).reset_index()
+        return event_over_time
+# medal_tally countrywise
+def medal_tally_country_wise(df, country):
+    temp = df.dropna(subset=['Medal'])
+    temp = df[(df['NOC'] == country) & (df['Medal'] != 'No Medal')]
+    temp = temp.drop_duplicates(subset=['NOC', 'Year', 'Sport', 'Event', 'Medal'])
+    country_wise_medal_tally = temp.groupby('Year').count()['Medal'].reset_index()
+    return country_wise_medal_tally
+# medal_tally countrywise over the years.
+def medal_over_the_years(df,country):
+    df = df.dropna(subset=['Medal'])
+    df = df.drop_duplicates(subset=['NOC', 'Year', 'Sport', 'Event', 'Medal'])
+    new_df = df[(df['NOC']==country)&(df['Medal']!='No Medal')]
+    x = new_df.pivot_table(index='Sport' , values='Medal' , columns='Year',  aggfunc='count' ,fill_value=0).reset_index()
+    return x 
+
+def age_distribution_by_sport(df):
+    athlete_df = df.drop_duplicates(subset=['Name','NOC'])
+    gold_won = athlete_df[athlete_df['Medal']=='Gold']
+    unique_sports = gold_won['Sport'].value_counts().head(20).index.tolist()
+    sport_names = []
+    val = []
+    for sport in unique_sports:
+        ages = gold_won[gold_won['Sport']==sport]['Age']
+        val.append(ages)
+        sport_names.append(sport)
+        
+def weight_vs_height(df,sport):
+    athlete_df = df.drop_duplicates(subset=['Name','NOC','Medal'])
+    if sport !='Overall':
+        temp_df = athlete_df[(athlete_df['Sport']==sport)]
+        return temp_df
+    else:
+        return athlete_df
+    
+def men_vs_women(df):
+    athlete_df = df.drop_duplicates(subset=['Name','NOC'])
+    men = athlete_df[athlete_df['Sex']=='M'].groupby('Year').count()['Name'].reset_index()
+    women = athlete_df[athlete_df['Sex']=='F'].groupby('Year').count()['Name'].reset_index()
+    final = men.merge(women ,on='Year' ,how='left')
+    final.rename(columns={'Name_x':'Men' , 'Name_y':'Women'},inplace=True)
+    final = final.fillna(0)
+    final = final.astype(int)
+    return final 

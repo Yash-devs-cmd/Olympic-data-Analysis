@@ -1,9 +1,5 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.preprocessing import OneHotEncoder
-import kagglehub
 
 def preprocess(csv_path):
     df = pd.read_csv(csv_path , sep=',' ,encoding="ISO-8859-1") # load dataset.
@@ -13,7 +9,7 @@ def preprocess(csv_path):
     strip_cols = df.select_dtypes(include=['object']).columns
 
 # Apply strip only to those columns
-    df[strip_cols] = df[strip_cols].map(lambda x: " ".join(x.split()) if isinstance(x, str) else x)
+    df[strip_cols] = df[strip_cols].apply(lambda col: col.map(lambda x: " ".join(x.split()) if isinstance(x, str) else x))
 
         
 # fill missing values
